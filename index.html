@@ -71,8 +71,7 @@
         <!-- Header & Tabs -->
         <header class="p-6 border-b border-gray-200">
             <h1 class="text-3xl font-extrabold text-indigo-700">TDD Design Lab: Principles in Practice</h1>
-            <p class="text-gray-500 mt-1">Explore High Cohesion, Low Coupling, Refactoring, and Test Hierarchy.</p> 
-            <p class="text-gray-500 mt-1">Prepared by Professor Younger.</p>
+            <p class="text-gray-500 mt-1">Explore High Cohesion, Low Coupling, Refactoring, and Test Hierarchy.</p>
         </header>
 
         <nav class="flex border-b border-gray-200">
@@ -181,8 +180,24 @@ class UserService {
                     <div id="challenge-1" class="bg-indigo-50 p-6 rounded-lg shadow-lg">
                         <h3 class="text-xl font-bold text-indigo-700 mb-4">Challenge 1: The God Function (Low Cohesion)</h3>
                         <pre class="bg-indigo-900 text-white p-4 rounded-md text-sm overflow-x-auto">
-function calculateShipping(items, user) {
-    // ... 4 unrelated operations mixed together ...
+function calculateDiscountAndSendEmail(cart, user) {
+    // 1. Calculate Discount (Business Logic)
+    let discount = 0;
+    if (user.isPremium) { 
+        discount = cart.total * 0.1;
+    }
+    
+    // 2. Apply Discount to Total
+    cart.finalTotal -= discount;
+
+    // 3. Log Discount to System Audit (I/O)
+    console.log(`User ${user.id} received ${discount}`); 
+
+    // 4. Send Email Notification (External API call)
+    const mailer = new EmailService(); 
+    mailer.send(user.email, "Discount Applied!");
+    
+    return cart.finalTotal;
 }
                         </pre>
 
@@ -210,9 +225,22 @@ function calculateShipping(items, user) {
                     <div id="challenge-2" class="bg-yellow-50 p-6 rounded-lg shadow-lg">
                         <h3 class="text-xl font-bold text-yellow-700 mb-4">Challenge 2: The Copy/Paste Error (Violation of DRY)</h3>
                         <pre class="bg-yellow-900 text-white p-4 rounded-md text-sm overflow-x-auto">
-// In UserService.js and OrderService.js
-if (user.isNew) { 
-    // ... 5 lines of identical default object creation logic
+// In UserService.js (1/2)
+if (user.status === 'PENDING') { 
+    // START: Identical Status Logic
+    const timestamp = new Date().toISOString();
+    console.log(`[USER_LOG] ${timestamp}: Status set to PENDING.`);
+    user.lastUpdate = timestamp;
+    // END: Identical Status Logic
+}
+
+// In OrderService.js (2/2)
+if (order.status === 'PENDING') { 
+    // START: Identical Status Logic
+    const timestamp = new Date().toISOString();
+    console.log(`[ORDER_LOG] ${timestamp}: Status set to PENDING.`);
+    order.lastUpdate = timestamp;
+    // END: Identical Status Logic
 }
                         </pre>
 
@@ -354,9 +382,7 @@ if (user.isNew) {
             e.currentTarget.classList.remove('drop-target-hover');
 
             if (draggedItem) {
-                const taskId = draggedItem.id;
                 const targetElement = e.currentTarget;
-                const targetId = targetElement.id;
 
                 if (targetElement.classList.contains('drop-target')) {
                     
