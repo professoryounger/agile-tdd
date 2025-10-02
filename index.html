@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDD Design Principles Interactive Lab</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for dragging */
+        .draggable {
+            cursor: grab;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .dragging {
+            opacity: 0.7;
+            border: 2px dashed #9ca3af;
+        }
+        .drop-target {
+            border: 2px dashed transparent;
+            min-height: 100px;
+            padding: 1rem;
+            transition: border-color 0.3s;
+        }
+        .drop-target-hover {
+            border-color: #3b82f6; /* Blue border on hover */
+        }
+        /* Style radio button container */
+        .radio-option {
+            display: block;
+            padding: 8px 12px;
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            transition: background-color 0.1s;
+        }
+        .radio-option:hover {
+            background-color: #f3f4f6;
+        }
+        .radio-option input:checked + label {
+            font-weight: bold;
+            color: #3b82f6;
+        }
+        .radio-option input {
+            margin-right: 8px;
+        }
+        /* Styling for the new matching game */
+        .matching-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .target-box {
+            min-height: 50px;
+            border: 2px dashed #9ca3af;
+            background-color: #f9fafb;
+            padding: 8px;
+        }
+        .source-box {
+            background-color: #d1fae5;
+            padding: 8px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="bg-white rounded-xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col h-[90vh]">
+        
+        <!-- Header & Tabs -->
+        <header class="p-6 border-b border-gray-200">
+            <h1 class="text-3xl font-extrabold text-indigo-700">TDD Design Lab: Principles in Practice</h1>
+            <p class="text-gray-500 mt-1">Explore High Cohesion, Low Coupling, Refactoring, and Test Hierarchy.</p> 
+            <p class="text-gray-500 mt-1">Prepared by Professor Younger.</p>
+        </header>
+
+        <nav class="flex border-b border-gray-200">
+            <button onclick="setActiveTab('cohesion')" id="tab-cohesion" 
+                class="px-4 py-3 text-sm font-medium transition-colors duration-200 focus:outline-none">
+                1. High Cohesion
+            </button>
+            <button onclick="setActiveTab('coupling')" id="tab-coupling" 
+                class="px-4 py-3 text-sm font-medium transition-colors duration-200 focus:outline-none">
+                2. Low Coupling (DI)
+            </button>
+            <button onclick="setActiveTab('refactor')" id="tab-refactor" 
+                class="px-4 py-3 text-sm font-medium transition-colors duration-200 focus:outline-none">
+                3. Refactoring Smells
+            </button>
+            <button onclick="setActiveTab('naming')" id="tab-naming" 
+                class="px-4 py-3 text-sm font-medium transition-colors duration-200 focus:outline-none">
+                4. Test Naming Hierarchy
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow p-6 overflow-y-auto">
+            
+            <!-- 1. HIGH COHESION CHALLENGE (Drag and Drop) -->
+            <section id="cohesion-tab" class="tab-content hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Task: Split the Mega-Function</h2>
+                <p class="text-gray-600 mb-6">High Cohesion means a function should only do *one* thing. Drag the tasks from the "Mega-Function" into the two smaller, more focused functions.</p>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    
+                    <!-- Source: Mega-Function (Low Cohesion) -->
+                    <div id="mega-function" class="bg-red-50 p-4 rounded-lg shadow-md border-2 border-red-300">
+                        <h3 class="text-xl font-bold text-red-700 mb-3">MegaFunction: processOrder()</h3>
+                        <div id="mega-tasks" data-target="mega-tasks" class="space-y-2 drop-target min-h-[200px]">
+                            <div id="task1" data-task="ValidateUserInput" class="draggable bg-red-200 p-2 rounded-md shadow-sm">Validate User Input</div>
+                            <div id="task2" data-task="CalculateTax" class="draggable bg-red-200 p-2 rounded-md shadow-sm">Calculate Tax & Total</div>
+                            <div id="task3" data-task="SaveToDatabase" class="draggable bg-red-200 p-2 rounded-md shadow-sm">Save Order to Database</div>
+                            <div id="task4" data-task="SendConfirmationEmail" class="draggable bg-red-200 p-2 rounded-md shadow-sm">Send Confirmation Email</div>
+                        </div>
+                        <p id="cohesion-mega-status" class="mt-2 text-sm text-red-500"></p>
+                    </div>
+                    
+                    <!-- Target 1: Order Processor (High Cohesion) -->
+                    <div id="order-processor" data-target="processor" class="bg-green-50 p-4 rounded-lg shadow-md border-2 border-green-300 drop-target">
+                        <h3 class="text-xl font-bold text-green-700 mb-3">Function: validateAndCalculate()</h3>
+                        <p class="text-sm text-gray-500">Focus: Business Logic</p>
+                    </div>
+                    
+                    <!-- Target 2: Communication/Persistence (High Cohesion) -->
+                    <div id="persistor" data-target="persistor" class="bg-green-50 p-4 rounded-lg shadow-md border-2 border-green-300 drop-target">
+                        <h3 class="text-xl font-bold text-green-700 mb-3">Function: persistAndNotify()</h3>
+                        <p class="text-sm text-gray-500">Focus: System Interaction</p>
+                    </div>
+
+                    <div class="md:col-span-3 mt-4">
+                         <p id="cohesion-feedback" class="text-center font-bold text-lg"></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. LOW COUPLING (DI) DEMO -->
+            <section id="coupling-tab" class="tab-content hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Task: Achieve Low Coupling for Testability</h2>
+                <p class="text-gray-600 mb-6">TDD forces **Low Coupling** because you need to isolate code. Tightly coupled code is hard to test. Dependency Injection (DI) fixes this.</p>
+
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    
+                    <!-- Implementation Box -->
+                    <div class="bg-gray-50 p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold text-gray-700 mb-4">The Class Under Test: UserService</h3>
+                        <pre id="coupling-code" class="bg-gray-800 text-yellow-300 p-3 rounded-md text-sm overflow-x-auto whitespace-pre-wrap">
+// TIGHTLY COUPLED (Bad Design)
+class UserService {
+    saveUser(user) {
+        // Tightly coupled to the exact Database implementation!
+        const db = new RealDatabase(); 
+        db.connect();
+        db.insert(user);
+    }
+}
+                        </pre>
+                        <button onclick="toggleCouplingMode()" id="coupling-toggle-btn"
+                                class="mt-4 w-full px-4 py-2 rounded-lg font-bold transition-colors duration-200 bg-red-500 text-white hover:bg-red-600">
+                            Switch to Dependency Injection (Good Design)
+                        </button>
+                    </div>
+                    
+                    <!-- Testability & Explanation Box -->
+                    <div class="p-6 rounded-lg border border-gray-300">
+                        <h3 class="text-xl font-bold text-indigo-700 mb-3">Testability Analysis</h3>
+                        <div id="testability-status" class="space-y-4">
+                            <!-- Content is injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. REFACTORING CODE SMELLS -->
+            <section id="refactor-tab" class="tab-content hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Task: Spot the Smell, Find the Fix</h2>
+                <p class="text-gray-600 mb-6">The **Refactor** step uses TDD's safety net (green tests) to fix code smells. Match the smell to the appropriate refactoring action.</p>
+                
+                <div class="space-y-8">
+                    <!-- CHALLENGE 1: LONG METHOD -->
+                    <div id="challenge-1" class="bg-indigo-50 p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold text-indigo-700 mb-4">Challenge 1: The God Function (Low Cohesion)</h3>
+                        <pre class="bg-indigo-900 text-white p-4 rounded-md text-sm overflow-x-auto">
+function calculateShipping(items, user) {
+    // ... 4 unrelated operations mixed together ...
+}
+                        </pre>
+
+                        <div class="mt-4 grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <h4 class="font-bold text-gray-800 mb-2">Code Smell:</h4>
+                                <div class="space-y-2">
+                                    <label class="radio-option"><input type="radio" name="smell1" value="Long Method"> <label>Long Method</label></label>
+                                    <label class="radio-option"><input type="radio" name="smell1" value="Duplicated Code"> <label>Duplicated Code</label></label>
+                                    <label class="radio-option"><input type="radio" name="smell1" value="Data Class"> <label>Data Class</label></label>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 mb-2">TDD Refactoring Fix:</h4>
+                                <div class="space-y-2">
+                                    <label class="radio-option"><input type="radio" name="refactor1" value="Extract Method"> <label>Extract Method</label></label>
+                                    <label class="radio-option"><input type="radio" name="refactor1" value="Move Method"> <label>Move Method</label></label>
+                                    <label class="radio-option"><input type="radio" name="refactor1" value="Inline Temp"> <label>Inline Temp</label></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CHALLENGE 2: DUPLICATED CODE -->
+                    <div id="challenge-2" class="bg-yellow-50 p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold text-yellow-700 mb-4">Challenge 2: The Copy/Paste Error (Violation of DRY)</h3>
+                        <pre class="bg-yellow-900 text-white p-4 rounded-md text-sm overflow-x-auto">
+// In UserService.js and OrderService.js
+if (user.isNew) { 
+    // ... 5 lines of identical default object creation logic
+}
+                        </pre>
+
+                        <div class="mt-4 grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <h4 class="font-bold text-gray-800 mb-2">Code Smell:</h4>
+                                <div class="space-y-2">
+                                    <label class="radio-option"><input type="radio" name="smell2" value="Long Method"> <label>Long Method</label></label>
+                                    <label class="radio-option"><input type="radio" name="smell2" value="Duplicated Code"> <label>Duplicated Code</label></label>
+                                    <label class="radio-option"><input type="radio" name="smell2" value="Inappropriate Intimacy"> <label>Inappropriate Intimacy</label></label>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 mb-2">TDD Refactoring Fix:</h4>
+                                <div class="space-y-2">
+                                    <label class="radio-option"><input type="radio" name="refactor2" value="Extract Method/Class"> <label>Extract Method/Class</label></label>
+                                    <label class="radio-option"><input type="radio" name="refactor2" value="Change Signature"> <label>Change Signature</label></label>
+                                    <label class="radio-option"><input type="radio" name="refactor2" value="Replace Conditional"> <label>Replace Conditional</label></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p id="refactor-feedback" class="mt-6 p-4 text-center font-bold text-lg rounded-lg bg-gray-200"></p>
+                    <button onclick="checkAllRefactorChallenges()" class="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors">
+                        Check My Refactoring Answers
+                    </button>
+                </div>
+            </section>
+            
+            <!-- 4. TEST NAMING HIERARCHY -->
+            <section id="naming-tab" class="tab-content hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Task: Match the Test Hierarchy (Outside-In)</h2>
+                <p class="text-gray-600 mb-6">Outside-In TDD means starting with the big picture (Acceptance Test) and only building the minimum units needed (Unit Test). Drag the correct **Unit Test Goal** to its matching **Feature Goal**.</p>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <h3 class="text-lg font-bold text-indigo-700">Feature Goal (Acceptance Test)</h3>
+                    <h3 class="text-lg font-bold text-green-700">Unit Test Goal (Smallest Step)</h3>
+                </div>
+
+                <div id="naming-container" class="space-y-4 mt-2">
+                    <!-- Matching Pairs are injected here by JS -->
+                </div>
+
+                <div class="mt-6">
+                    <p id="naming-feedback" class="text-center font-bold text-lg"></p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        let currentTab = 'cohesion';
+        
+        // --- Global Utility ---
+        const getById = (id) => document.getElementById(id);
+
+        // --- Tab Management ---
+        const setActiveTab = (tabName) => {
+            document.querySelectorAll('.tab-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.querySelectorAll('nav button').forEach(button => {
+                button.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-500');
+                button.classList.add('text-gray-500', 'hover:text-gray-700');
+            });
+
+            getById(`${tabName}-tab`).classList.remove('hidden');
+            getById(`tab-${tabName}`).classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-500');
+            getById(`tab-${tabName}`).classList.remove('text-gray-500', 'hover:text-gray-700');
+            currentTab = tabName;
+        };
+
+        // --- 1. Cohesion Challenge Logic (Drag and Drop) ---
+        const cohesionTasks = [
+            { id: 'task1', target: 'processor', correctTarget: 'processor', msg: 'Good: Validation belongs to business logic.' },
+            { id: 'task2', target: 'processor', correctTarget: 'processor', msg: 'Good: Calculation is core business logic.' },
+            { id: 'task3', target: 'persistor', correctTarget: 'persistor', msg: 'Good: Database interaction is system persistence.' },
+            { id: 'task4', target: 'persistor', correctTarget: 'persistor', msg: 'Good: Email is a notification/system interaction.' }
+        ];
+
+        let draggedItem = null;
+
+        const handleDragStart = (e) => {
+            draggedItem = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', e.target.id);
+        };
+
+        const handleDragOver = (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('drop-target-hover');
+        };
+        
+        const handleDragLeave = (e) => {
+            e.currentTarget.classList.remove('drop-target-hover');
+        };
+
+        const checkCohesionComplete = () => {
+            let allCorrect = true;
+            cohesionTasks.forEach(task => {
+                const element = getById(task.id);
+                const parent = element.parentElement.id;
+                
+                if (parent === 'mega-tasks') {
+                    allCorrect = false;
+                    return;
+                }
+                const taskData = cohesionTasks.find(t => t.id === task.id);
+                const targetElement = getById(parent);
+                const currentTarget = targetElement ? targetElement.getAttribute('data-target') : null;
+
+                if (currentTarget !== taskData.correctTarget) {
+                    allCorrect = false;
+                }
+            });
+
+            const feedback = getById('cohesion-feedback');
+            const megaTasksCount = getById('mega-tasks').children.length;
+            
+            if (allCorrect && megaTasksCount === 0) {
+                feedback.innerHTML = '🎉 Success! You achieved High Cohesion by separating Business Logic from System Interactions.';
+                feedback.classList.remove('text-red-500');
+                feedback.classList.add('text-green-700');
+            } else if (megaTasksCount === 0) {
+                 feedback.innerHTML = 'Needs adjustment. Review the focus of the two new functions!';
+                 feedback.classList.remove('text-green-700');
+                 feedback.classList.add('text-red-500');
+            } else {
+                 feedback.innerHTML = 'Drag all the tasks out of the MegaFunction!';
+                 feedback.classList.remove('text-green-700', 'text-red-500');
+            }
+        };
+
+
+        const handleDrop = (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drop-target-hover');
+
+            if (draggedItem) {
+                const taskId = draggedItem.id;
+                const targetElement = e.currentTarget;
+                const targetId = targetElement.id;
+
+                if (targetElement.classList.contains('drop-target')) {
+                    
+                    // If dropping into a matching target, ensure only one item is there
+                    if (targetElement.classList.contains('target-box') && targetElement.children.length > 0 && draggedItem.classList.contains('unit-test-item')) {
+                        // Move the existing item back to the source container
+                        const existingItem = targetElement.children[0];
+                        getById('unit-test-source').appendChild(existingItem);
+                    }
+
+                    targetElement.appendChild(draggedItem);
+                    draggedItem.classList.remove('dragging');
+
+                    // Check for general drop (cohesion)
+                    if (currentTab === 'cohesion') {
+                        checkCohesionComplete();
+                    }
+                    // Check for naming game drop
+                    if (currentTab === 'naming') {
+                        checkNamingComplete();
+                    }
+                }
+            }
+        };
+
+        // --- 2. Coupling Challenge Logic ---
+        let isCoupled = true;
+        // (coupledCode and injectedCode remain the same)
+        const coupledCode = `
+// TIGHTLY COUPLED (Bad Design)
+class UserService {
+    saveUser(user) {
+        // Tightly coupled to the exact Database implementation!
+        const db = new RealDatabase(); 
+        db.connect();
+        db.insert(user);
+    }
+}
+        `;
+        const coupledAnalysis = `
+            <p class="text-red-600 font-bold">❌ Tightly Coupled</p>
+            <p>The <code>UserService</code> creates its own <code>RealDatabase</code> internally.</p>
+            <p><strong>Testing Issue:</strong> To test <code>saveUser()</code>, you must connect to a real database. This makes the test slow, brittle, and impossible to run offline. High Coupling = Low Testability.</p>
+        `;
+
+        const injectedCode = `
+// DEPENDENCY INJECTED (Good TDD Design)
+class UserService {
+    constructor(dbService) {
+        this.db = dbService; // Dependency Injection (DI)
+    }
+
+    saveUser(user) {
+        // Uses the injected service, doesn't care if it's Real or Mock!
+        this.db.insert(user);
+    }
+}
+        `;
+        const injectedAnalysis = `
+            <p class="text-green-600 font-bold">✅ Low Coupling (Testable)</p>
+            <p>The <code>UserService</code> receives the database dependency through its constructor (DI).</p>
+            <p><strong>Testing Solution:</strong> For a unit test, you can pass a <code>MockDatabase</code> that just records the call without hitting the disk. Low Coupling = High Testability.</p>
+        `;
+
+        const toggleCouplingMode = () => {
+            const codePre = getById('coupling-code');
+            const analysisDiv = getById('testability-status');
+            const button = getById('coupling-toggle-btn');
+            
+            isCoupled = !isCoupled;
+
+            if (isCoupled) {
+                codePre.textContent = coupledCode.trim();
+                analysisDiv.innerHTML = coupledAnalysis;
+                button.textContent = 'Switch to Dependency Injection (Good Design)';
+                button.classList.remove('bg-green-500', 'hover:bg-green-600');
+                button.classList.add('bg-red-500', 'hover:bg-red-600');
+            } else {
+                codePre.textContent = injectedCode.trim();
+                analysisDiv.innerHTML = injectedAnalysis;
+                button.textContent = 'Switch to Tightly Coupled (Bad Design)';
+                button.classList.remove('bg-red-500', 'hover:bg-red-600');
+                button.classList.add('bg-green-500', 'hover:bg-red-600');
+            }
+        };
+
+        // --- 3. Refactoring Challenge Logic ---
+        const correctAnswers = {
+            smell1: 'Long Method',
+            refactor1: 'Extract Method',
+            smell2: 'Duplicated Code',
+            refactor2: 'Extract Method/Class'
+        };
+
+        const checkAllRefactorChallenges = () => {
+            const feedback = getById('refactor-feedback');
+            let score = 0;
+            const total = 4;
+            let missingSelections = false;
+
+            const smell1 = document.querySelector('input[name="smell1"]:checked');
+            const refactor1 = document.querySelector('input[name="refactor1"]:checked');
+            const smell2 = document.querySelector('input[name="smell2"]:checked');
+            const refactor2 = document.querySelector('input[name="refactor2"]:checked');
+            
+            if (smell1 && refactor1) {
+                if (smell1.value === correctAnswers.smell1) score++;
+                if (refactor1.value === correctAnswers.refactor1) score++;
+            } else { missingSelections = true; }
+
+            if (smell2 && refactor2) {
+                if (smell2.value === correctAnswers.smell2) score++;
+                if (refactor2.value === correctAnswers.refactor2) score++;
+            } else { missingSelections = true; }
+
+            if (missingSelections && score < 4) {
+                 feedback.textContent = 'Please select an option for all four boxes before checking.';
+                 feedback.className = 'mt-6 p-4 text-center font-bold text-lg rounded-lg bg-gray-200';
+                 return;
+            }
+
+            if (score === total) {
+                feedback.textContent = `🎉 Perfect! ${score}/${total} Correct. The Refactor step is crucial for clean code!`;
+                feedback.className = 'mt-6 p-4 text-center font-bold text-lg rounded-lg bg-green-100 text-green-700 border-green-300 border';
+            } else {
+                feedback.textContent = `Keep going! You scored ${score}/${total}. Review your Cohesion and Duplication knowledge.`;
+                feedback.className = 'mt-6 p-4 text-center font-bold text-lg rounded-lg bg-red-100 text-red-700 border-red-300 border';
+            }
+        };
+        
+        // --- 4. Naming Challenge Logic (Drag and Drop) ---
+        const namingPairs = [
+            { id: 'pair1', feature: 'User successfully completes payment for their cart.', correctUnit: 'unit1', targetId: 'target1' },
+            { id: 'pair2', feature: 'Admin is alerted immediately when a server error occurs.', correctUnit: 'unit2', targetId: 'target2' },
+            { id: 'pair3', feature: 'User receives a 10% discount on cart total.', correctUnit: 'unit3', targetId: 'target3' }
+        ];
+
+        const unitTests = [
+            { id: 'unit1', text: 'test_is_credit_card_valid_returns_false_for_expired_date()' },
+            { id: 'unit2', text: 'test_formatter_correctly_prepends_timestamp_to_log_message()' },
+            { id: 'unit3', text: 'test_apply_discount_returns_correct_value_when_percentage_is_ten()' }
+        ];
+
+        const renderNamingChallenge = () => {
+            const container = getById('naming-container');
+            container.innerHTML = '';
+            
+            // Shuffle unit tests for random placement in source box
+            const shuffledUnits = [...unitTests].sort(() => Math.random() - 0.5);
+
+            // 1. Render the Feature goals (targets)
+            namingPairs.forEach(pair => {
+                const pairDiv = document.createElement('div');
+                pairDiv.className = 'matching-pair';
+                pairDiv.id = pair.id;
+
+                // Feature Goal (fixed)
+                const featureDiv = document.createElement('div');
+                featureDiv.className = 'source-box bg-indigo-100 border-indigo-300 border';
+                featureDiv.textContent = pair.feature;
+
+                // Unit Test Drop Target
+                const targetDiv = document.createElement('div');
+                targetDiv.className = 'target-box drop-target';
+                targetDiv.id = pair.targetId;
+                targetDiv.setAttribute('data-correct-unit', pair.correctUnit);
+
+                pairDiv.appendChild(featureDiv);
+                pairDiv.appendChild(targetDiv);
+                container.appendChild(pairDiv);
+            });
+
+            // 2. Render the Unit Test drag sources
+            const unitSourceDiv = document.createElement('div');
+            unitSourceDiv.id = 'unit-test-source';
+            unitSourceDiv.className = 'mt-6 p-4 bg-green-200 rounded-lg shadow-inner';
+            unitSourceDiv.innerHTML = '<h4 class="font-bold text-green-800 mb-3">Unit Test Goals (Drag these)</h4>';
+            
+            shuffledUnits.forEach(unit => {
+                const item = document.createElement('div');
+                item.id = unit.id;
+                item.className = 'draggable unit-test-item bg-green-500 text-white p-2 rounded-md shadow-sm mt-1';
+                item.textContent = unit.text;
+                item.setAttribute('draggable', true);
+                unitSourceDiv.appendChild(item);
+            });
+
+            container.appendChild(unitSourceDiv);
+
+            // Reattach drag listeners
+            document.querySelectorAll('.draggable').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+            });
+            document.querySelectorAll('.drop-target').forEach(target => {
+                target.addEventListener('dragover', handleDragOver);
+                target.addEventListener('dragleave', handleDragLeave);
+                target.addEventListener('drop', handleDrop);
+            });
+        };
+
+        const checkNamingComplete = () => {
+            const feedback = getById('naming-feedback');
+            let correctCount = 0;
+            const total = namingPairs.length;
+            let allFilled = true;
+
+            namingPairs.forEach(pair => {
+                const targetBox = getById(pair.targetId);
+                if (targetBox.children.length === 0) {
+                    allFilled = false;
+                } else {
+                    const droppedUnitId = targetBox.children[0].id;
+                    if (droppedUnitId === pair.correctUnit) {
+                        correctCount++;
+                    }
+                }
+            });
+
+            if (!allFilled) {
+                feedback.textContent = 'Drag all Unit Test Goals to their matching Feature Goal.';
+                feedback.className = 'text-center font-bold text-lg text-gray-500';
+            } else if (correctCount === total) {
+                feedback.textContent = `🌟 Perfect Match! You understand the TDD Test Hierarchy. Score: ${correctCount}/${total}.`;
+                feedback.className = 'text-center font-bold text-lg text-green-700 bg-green-100 p-2 rounded';
+            } else {
+                feedback.textContent = `Needs work! Only ${correctCount}/${total} are correct. Remember: Start BIG, implement the smallest unit first.`;
+                feedback.className = 'text-center font-bold text-lg text-red-700 bg-red-100 p-2 rounded';
+            }
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial tab
+            setActiveTab('cohesion');
+            
+            // Set initial coupling state
+            toggleCouplingMode(); // Calls it once to set the initial 'Bad Design' state
+            isCoupled = true; // Reset flag after initial toggle
+
+            // Cohesion Drag/Drop listeners (These are set up in renderNamingChallenge as well)
+            document.querySelectorAll('.draggable').forEach(item => {
+                item.setAttribute('draggable', true);
+                item.addEventListener('dragstart', handleDragStart);
+            });
+            document.querySelectorAll('.drop-target').forEach(target => {
+                target.addEventListener('dragover', handleDragOver);
+                target.addEventListener('dragleave', handleDragLeave);
+                target.addEventListener('drop', handleDrop);
+            });
+
+            // Render the Naming Challenge on load
+            renderNamingChallenge();
+        });
+
+    </script>
+
+</body>
+</html>
